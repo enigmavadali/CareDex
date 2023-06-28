@@ -1,0 +1,59 @@
+version: '3.2'
+
+services:
+  postgres-facility-1:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: facility1
+    volumes:
+      - ./facility-api/facility1.sql:/docker-entrypoint-initdb.d/facility1.sql
+    ports:
+      - "5433:5432"
+  facility-1-service:
+    build: ./facility-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-facility-1
+      - rabbitmq
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-facility-1:5432/Facility1
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      FACILITY_ID: 1
+  postgres-facility-2:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: facility2
+    volumes:
+      - ./facility-api/facility2.sql:/docker-entrypoint-initdb.d/facility2.sql
+    ports:
+      - "5434:5432"
+  facility-2-service:
+    build: ./facility-api
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres-facility-2
+      - rabbitmq
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-facility-2:5432/Facility2
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      FACILITY_ID: 2
+  aggregation-api:
+    build: ./aggregation-api
+    ports:
+      - "8082:8080"
+  rabbitmq:
+    image: rabbitmq:3-management
+    volumes:
+      - ./queue/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./queue/queues.json:/etc/rabbitmq/queues.json
+    ports:
+      - "5672:5672"
+      - "15672:15672"
